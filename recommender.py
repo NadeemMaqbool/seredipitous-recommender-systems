@@ -179,6 +179,172 @@ user_recomm = defaultdict(list)
 #df_test = open("recommended_locations_test.txt","r").readlines()
 df_test = open("recommended_locations_test.txt","r").readlines()
 #df_test = open("Gowalla_test.txt","r").readlines()
+
+
+user_recomm = defaultdict(list)
+# df = pd.read_csv('gowalla_.txt', header =None)
+
+def write_in_test_file(outputfile1, u, line):
+    with open(outputfile1, 'a+') as f:
+        f.write(str(u) + "\t")
+        for i in line:
+            f.write(str(i) + ",")
+        f.write("\n")
+        
+def recommender_test(file, outputfile):
+    df = open(file,"r").readlines()
+    user_sim = {}
+    df_list = {}
+    pair = {}
+    userlist = set()
+    for line in df:
+        user, locid, freq  = line.strip().split()
+        user, locid, freq = int(user), int(locid) , int(freq)
+        userlist.add(user)
+        df_list[user, locid] = (freq)
+
+    total_users = len(userlist)
+    sum = 0
+    count = 0
+    y_data = {}
+    
+    for j in df_list:
+        y_data[j] = [df_list[j], 0]
+
+
+    for i in (userlist):
+        for j in df_list:
+            if (i == j[0]):      
+                sum = sum + df_list[j]
+                count +=1
+        avg = sum/count
+        for k in df_list:
+            if (i == k[0]): 
+                if df_list[k] > avg:
+                    y_data[k][1] = 1
+
+
+    locations = defaultdict(int)
+    for i in df_list:
+        locations[i[1]] += 1
+
+    # ========================================================================================
+    popularity = []
+    unexpectedness = []
+
+    for x in locations:
+        loc_pop = locations[x]/total_users
+        locations[x] = (locations[x],) + (loc_pop,)
+        popularity.append(loc_pop)    
+
+    avg_popularity = mean(popularity)
+
+    for j in locations:
+        x = list(locations[j])
+        if locations[j][1] > avg_popularity:
+            x.append(1)
+            locations[j] = (x)
+            unexpectedness.append(1)
+
+        else:
+            x.append(0)
+            locations[j] = (x)
+            unexpectedness.append(0)
+
+    avg_unexpectedness = mean(unexpectedness)
+    print("unexpectedness")
+    
+    for y in y_data:
+        for a in locations:
+            if (a == y[1]):
+                 y_data[y].append(locations[a][2])
+
+    for y in y_data:
+        if (y_data[y][1] == 1 and y_data[y][2] == 1):
+             y_data[y].append(1)
+        else:
+            y_data[y].append(0)
+        
+    combined_sim_loc = []
+    superarray = []
+
+    for i in range(0, total_users):
+
+        counts_recom = 0
+        ruser_compare = {}
+        locer_compare = []
+        ruser = {}
+        locer = []
+        lister = []
+        array = []
+        for j in df_list:
+            if (i == j[0]):
+                ruser[j] = df_list[j]
+                locer.append(j[1])
+
+        for n in range(0, total_users):
+            count = 0
+            if (i == n):
+                continue
+
+            else:
+                for m in df_list:
+                    if (n == m[0]):
+                        ruser_compare[m] = df_list[m]
+                        locer_compare.append(m[1])
+
+                for j in locer:
+                    for k in locer_compare:
+                        if (j == k):
+                            count += 1
+                        else:
+                            if k not in locer:
+                                array.append(k)
+                        
+#                         if (count <= 5):
+#                             if (j == k):
+#                                 count += 1
+#                             else:
+#                                 if k not in locer:
+#                                     array.append(k)
+#                         else:
+#                             break
+
+                if (count >= 5):
+                    lister.append(n)
+                
+        for lc in lister:
+            
+            for lis in set(array):
+                for y in y_data:       
+                    if (lc == y[0]):
+                        if (y[1] == lis) and ((y_data[y][3]) == 1):
+                            if ((y[1] not in user_recomm[i])):
+
+                                user_recomm[i].append(y[1])
+                                counts_recom +=1
+                                
+                                    
+        write_in_test_file(outputfile, i, user_recomm[i])
+        print("writing in test file")
+    #         if lister != []:
+
+    #     pair[i] = lister
+    #     combined_sim_loc.append(list(set(superarray + array)))
+    # print(combined_sim_loc)
+    #print(user_recomm)
+    #return user_recomm
+    # print(y_data)     
+################### Test data #####################################
+file = open("recommended_locations_test.txt","w")
+file.close()
+
+recommender_test("gowalla_test_100.txt", "recommended_locations_test.txt")
+
+
+output = open("recommended_locations.txt", "r").readlines()
+
+
 dftest_list = {}
 locationtest = defaultdict(list)
 usertestlist = set()
